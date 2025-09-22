@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8">
+    <title>Muñeco de nieve con giroscopio</title>
+    <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+  </head>
+  <body>
+    <!-- Botón para activar giroscopio -->
+    <button id="gyroButton" style="position:absolute;top:20px;left:20px;z-index:999;padding:10px 20px;">
+      Activar giroscopio
+    </button>
+
+    <a-scene>
+      <!-- Piso -->
+      <a-plane rotation="-90 0 0" width="20" height="20" color="#a3d2ca"></a-plane>
+
+      <!-- Cuerpo del muñeco -->
+      <a-sphere position="0 0.5 -4" radius="0.5" color="white"></a-sphere>
+      <a-sphere position="0 1.3 -4" radius="0.35" color="white"></a-sphere>
+      <a-sphere position="0 1.8 -4" radius="0.25" color="white"></a-sphere>
+
+      <!-- Ojos -->
+      <a-sphere position="-0.08 1.9 -3.7" radius="0.03" color="black"></a-sphere>
+      <a-sphere position="0.08 1.9 -3.7" radius="0.03" color="black"></a-sphere>
+
+      <!-- Nariz -->
+      <a-cone position="0 1.8 -3.65" radius-bottom="0.05" radius-top="0.01" height="0.2" color="orange" rotation="90 0 0"></a-cone>
+
+      <!-- Botones -->
+      <a-sphere position="0 1.6 -3.7" radius="0.03" color="black"></a-sphere>
+      <a-sphere position="0 1.15 -3.7" radius="0.03" color="black"></a-sphere>
+      <a-sphere position="0 0.9 -3.7" radius="0.03" color="black"></a-sphere>
+
+      <!-- Sombrero -->
+      <a-cylinder position="0 2.05 -4" radius="0.3" height="0.05" color="black"></a-cylinder>
+      <a-cylinder position="0 2.25 -4" radius="0.15" height="0.4" color="black"></a-cylinder>
+
+      <!-- Luz -->
+      <a-light type="directional" position="1 4 3" intensity="1"></a-light>
+
+      <!-- Cámara con look-controls -->
+      <a-entity position="0 1.6 0">
+        <a-camera id="camera" look-controls="magicWindowTrackingEnabled: true"></a-camera>
+      </a-entity>
+    </a-scene>
+
+    <script>
+      document.getElementById("gyroButton").addEventListener("click", function () {
+        if (typeof DeviceMotionEvent !== "undefined" && typeof DeviceMotionEvent.requestPermission === "function") {
+          // iOS
+          DeviceMotionEvent.requestPermission().then(response => {
+            if (response === "granted") {
+              alert("✅ Giroscopio activado en iOS");
+              document.getElementById("gyroButton").style.display = "none";
+            } else {
+              alert("❌ Acceso denegado al giroscopio");
+            }
+          }).catch(console.error);
+        } else if (typeof DeviceOrientationEvent !== "undefined" && typeof DeviceOrientationEvent.requestPermission === "function") {
+          // Algunos navegadores usan DeviceOrientationEvent
+          DeviceOrientationEvent.requestPermission().then(response => {
+            if (response === "granted") {
+              alert("✅ Giroscopio activado");
+              document.getElementById("gyroButton").style.display = "none";
+            }
+          }).catch(console.error);
+        } else {
+          // Android normal
+          alert("✅ Tu navegador ya soporta giroscopio");
+          document.getElementById("gyroButton").style.display = "none";
+        }
+      });
+    </script>
+  </body>
+</html>
