@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8">
+    <title>Banda transportadora con botellas (corregido)</title>
+    <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+  </head>
+  <body>
+    <a-scene>
+      <!-- Piso -->
+      <a-plane rotation="-90 0 0" width="20" height="20" color="#dddddd"></a-plane>
+
+      <!-- Banda transportadora -->
+      <a-box id="banda" position="0 0.2 0" depth="14" width="2" height="0.1" color="#555"></a-box>
+
+      <!-- Grifo -->
+      <a-cylinder position="0 2 0" radius="0.1" height="1" color="#222"></a-cylinder>
+      <!-- Chorro de agua -->
+      <a-cylinder id="chorro" position="0 1.3 0" radius="0.05" height="0.6" color="blue" visible="false"></a-cylinder>
+
+      <!-- Botellas -->
+      <a-entity id="botella1" position="0 0.6 -6">
+        <a-cylinder radius="0.2" height="0.8" color="lightgreen"></a-cylinder>
+        <a-cylinder radius="0.08" height="0.3" color="lightgreen" position="0 0.55 0"></a-cylinder>
+      </a-entity>
+
+      <a-entity id="botella2" position="0 0.6 -10">
+        <a-cylinder radius="0.2" height="0.8" color="lightgreen"></a-cylinder>
+        <a-cylinder radius="0.08" height="0.3" color="lightgreen" position="0 0.55 0"></a-cylinder>
+      </a-entity>
+
+      <a-entity id="botella3" position="0 0.6 -14">
+        <a-cylinder radius="0.2" height="0.8" color="lightgreen"></a-cylinder>
+        <a-cylinder radius="0.08" height="0.3" color="lightgreen" position="0 0.55 0"></a-cylinder>
+      </a-entity>
+
+      <!-- Luz -->
+      <a-light type="directional" position="3 5 3" intensity="1"></a-light>
+
+      <!-- Cámara lateral -->
+      <a-entity position="6 2 0" rotation="0 90 0">
+        <a-camera></a-camera>
+      </a-entity>
+    </a-scene>
+
+    <script>
+      // util sleep
+      const sleep = ms => new Promise(res => setTimeout(res, ms));
+
+      // elementos
+      const botellas = [
+        document.querySelector("#botella1"),
+        document.querySelector("#botella2"),
+        document.querySelector("#botella3")
+      ];
+      const chorro = document.querySelector("#chorro");
+
+      // parámetros (ajusta si quieres)
+      const startPositions = [-6, -10, -14]; // posiciones iniciales X (z in your scene)
+      const centerPos = 0;                    // punto de llenado (z)
+      const endPos = 6;                       // posición final (z)
+      const moveDur = 4000;                   // ms mover a grifo
+      const fillDur = 2000;                   // ms que queda visible el chorro (llenado)
+      const exitDur = 4000;                   // ms salir hasta endPos
+      const interBottleDelay = 6000;          // ms entre botellas (start delays)
+      // El tiempo total después del que una botella vuelve a la cola = moveDur + fillDur + exitDur = 10000
+      const resetOffset = moveDur + fillDur + exitDur; // 10000
+
+      // dinámica del ciclo (garantiza que no se solapen)
+      const cycleDuration = (botellas.length - 1) * interBottleDelay + resetOffset;
+      // ejemplo n=3 -> cycleDuration = 2*6000 + 10000 = 22000 ms
+
+      let running = false;
+
+      // limpia animaciones previas (evita duplicados)
+      function clearAnimations(el) {
+        try {
+          el.removeAttribute('animation__mover');
+          el.removeAttribute('animation__salir');
+        } catch (e) { /* noop */ }
+      }
+
+      // animación independiente para cada botella
+      async function animarBotella(bottleEl, index, startDelay) {
+        // espera hasta el tiempo de inicio relativo al ciclo
+        await sleep(startDelay);
+
+        // asegurar que no hay animaciones viejas
+        clearAnimations(bottleEl);
+
+        // forzar posición inicial correspondiente a su lugar en la cola
+        const startZ = startPositions[index] ?? (-6 - index*4);
+        bottleEl.setAttribute('position', `0 0.6 ${startZ}`);
+
+        // 1) mover a grifo (centerPos)
+        bottleEl.setAttribute('animation__mover', {
+          property: 'position',
+          to: `0 0.6 ${centerPos}`,
+          dur: moveDur,
+          easing: 'linear'
+        });
+
+        // esperar a que llegue
+        await sleep(moveDur);
+
+        // 2) mostrar chorro (llenado)
+        chorro.setAttribute('visible', true);
+        await sleep(fillDur);
+        chorro.setAttribute('visible', false);
+
+        // 3) salir hacia endPos
+        clearAnimations(bottleEl);
+        bottleEl.setAttribute('animation__salir', {
+          property: 'position',
+          to: `0 0.6 ${endPos}`,
+          dur: exitDur,
+          easing: 'linear'
+        });
+
+        // esperar a que salga
+        await sleep(exitDur);
+
+        // 4) reset: colocarlo detrás de la cola para la siguiente iteración
+        const resetZ = startPositions[startPositions.length - 1]; // -14 en tu caso
+        bottleEl.setAttribute('position', `0 0.6 ${resetZ}`);
+      }
+
+      // ciclo principal (evita múltiples instancias)
+      async function cicloBotellas() {
+        if (running) return; // ya corriendo
+        running = true;
+
+        // bucle infinito (el cicloDuration garantiza que no se solapen las iteraciones)
+        while (true) {
+          // (re)colocar las botellas al inicio del ciclo para asegurar alineación
+          botellas.forEach((b, i) =>
+            b.setAttribute('position', `0 0.6 ${startPositions[i]}`)
+          );
+
+          // lanzar las animaciones independientes (no await directo para que se solapen según delays)
+          botellas.forEach((b, i) => {
+            animarBotella(b, i, i * interBottleDelay).catch(console.error);
+          });
+
+          // esperar a que termine TODO el ciclo antes de iniciar otro (evita solape)
+          await sleep(cycleDuration);
+        }
+      }
+
+      // arrancar
+      cicloBotellas();
+    </script>
+  </body>
+</html>
