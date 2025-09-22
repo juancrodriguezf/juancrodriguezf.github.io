@@ -44,33 +44,6 @@
         <a-camera id="camera" look-controls="magicWindowTrackingEnabled: true"></a-camera>
       </a-entity>
     </a-scene>
-
-    <script>
-      document.getElementById("gyroButton").addEventListener("click", function () {
-        if (typeof DeviceMotionEvent !== "undefined" && typeof DeviceMotionEvent.requestPermission === "function") {
-          // iOS
-          DeviceMotionEvent.requestPermission().then(response => {
-            if (response === "granted") {
-              alert("✅ Giroscopio activado en iOS");
-              document.getElementById("gyroButton").style.display = "none";
-            } else {
-              alert("❌ Acceso denegado al giroscopio");
-            }
-          }).catch(console.error);
-        } else if (typeof DeviceOrientationEvent !== "undefined" && typeof DeviceOrientationEvent.requestPermission === "function") {
-          // Algunos navegadores usan DeviceOrientationEvent
-          DeviceOrientationEvent.requestPermission().then(response => {
-            if (response === "granted") {
-              alert("✅ Giroscopio activado");
-              document.getElementById("gyroButton").style.display = "none";
-            }
-          }).catch(console.error);
-        } else {
-          // Android normal
-          alert("✅ Tu navegador ya soporta giroscopio");
-          document.getElementById("gyroButton").style.display = "none";
-        }
-      });
-    </script>
   </body>
 </html>
+
